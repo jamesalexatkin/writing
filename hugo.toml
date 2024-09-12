@@ -38,5 +38,6 @@ weight = 4
     
 
 [params]
-    # enableReadingTime=true
-    custom_css = ["css/custom_style.css"]
+  favicon = "https://raw.githubusercontent.com/jamesalexatkin/jamesalexatkin.github.io/master/favicon.png"
+  # enableReadingTime=true
+  custom_css = ["css/custom_style.css"]
