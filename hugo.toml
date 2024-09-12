@@ -1,4 +1,4 @@
-baseURL = 'jamesatk.in/blog'
+# baseURL = 'jamesatk.in/blog'
 languageCode = 'en-gb'
 title = 'jamesatk.in'
 theme = 'diary'
@@ -40,4 +40,4 @@ weight = 4
 [params]
   favicon = "https://raw.githubusercontent.com/jamesalexatkin/jamesalexatkin.github.io/master/favicon.png"
   # enableReadingTime=true
-  custom_css = ["css/custom_style.css"]
+  # custom_css = ["css/custom_style.css"]
