@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on jamesatk.in</title>
+    <link>https://example.org/posts/</link>
+    <description>Recent content in Posts on jamesatk.in</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Thu, 12 Sep 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Mocking with dependency injection in Go</title>
+      <link>https://example.org/posts/mocking_dependency_injection_go/</link>
+      <pubDate>Thu, 12 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://example.org/posts/mocking_dependency_injection_go/</guid>
+      <description>This is a pattern I&amp;rsquo;ve used quite a bit at work and is pretty useful for unit testing.&#xA;A scenario Let&amp;rsquo;s suppose we have a service Service which provides various bits of functionality. One such function is registering users. This interfaces with Amazon&amp;rsquo;s Cognito service for identity management, as well as doing other things, like maybe saving them to a database:&#xA;type Service struct{ CognitoClient *cognitoidentityprovider.Client // ...Other fields } func New() *Service { return &amp;amp;Service{ CognitoClient: cognitoidentityprovider.</description>
+    </item>
+    <item>
+      <title>Self-hosted music streaming on a Raspberry Pi</title>
+      <link>https://example.org/posts/navidrome_raspberry_pi/</link>
+      <pubDate>Wed, 26 Oct 2022 00:00:00 +0000</pubDate>
+      <guid>https://example.org/posts/navidrome_raspberry_pi/</guid>
+      <description>I got a Raspberry Pi years ago after finishing GCSE Computing at school and could never quite figure out what to do with it.&#xA;Recently though I found out about a project called Navidrome:&#xA;Navidrome is an open source web-based music collection server and streamer. It gives you freedom to listen to your music collection from any browser or mobile device. It’s like your personal Spotify!&#xA;(from the Github README) It’s compatible with the Subsonic API which is accessible from a number of music player client across mobile, desktop and web platforms.</description>
+    </item>
+  </channel>
+</rss>

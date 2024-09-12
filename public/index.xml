@@ -1,0 +1,249 @@
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>jamesatk.in</title>
+    <link>https://example.org/</link>
+    <description>Recent content on jamesatk.in</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-gb</language>
+    <lastBuildDate>Thu, 12 Sep 2024 00:00:00 +0000</lastBuildDate>
+    
+        <atom:link href="https://example.org/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    
+        <item>
+        <title>Mocking with dependency injection in Go</title>
+        <link>https://example.org/posts/mocking_dependency_injection_go/</link>
+        <pubDate>Thu, 12 Sep 2024 00:00:00 +0000</pubDate>
+        
+        <guid>https://example.org/posts/mocking_dependency_injection_go/</guid>
+        <description>jamesatk.in https://example.org/posts/mocking_dependency_injection_go/ -&lt;p&gt;This is a pattern I&amp;rsquo;ve used quite a bit at work and is pretty useful for unit testing.&lt;/p&gt;
+&lt;h1 id=&#34;a-scenario&#34;&gt;A scenario&lt;/h1&gt;
+&lt;p&gt;Let&amp;rsquo;s suppose we have a service &lt;code&gt;Service&lt;/code&gt; which provides various bits of functionality.
+One such function is registering users.
+This interfaces with Amazon&amp;rsquo;s &lt;a href=&#34;https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html&#34;&gt;Cognito&lt;/a&gt; service for identity management, as well as doing other things, like maybe saving them to a database:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;type&lt;/span&gt; Service &lt;span style=&#34;color:#fc5fa3&#34;&gt;struct&lt;/span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	CognitoClient *cognitoidentityprovider.Client
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// ...Other fields
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;() *Service {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;return&lt;/span&gt; &amp;amp;Service{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		CognitoClient: cognitoidentityprovider.&lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;(),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; (s *Service) &lt;span style=&#34;color:#41a1c0&#34;&gt;RegisterUser&lt;/span&gt;(ctx context.Context, params RegisterParams) &lt;span style=&#34;color:#fc5fa3&#34;&gt;error&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	slog.&lt;span style=&#34;color:#41a1c0&#34;&gt;Info&lt;/span&gt;(&lt;span style=&#34;color:#fc6a5d&#34;&gt;&amp;#34;registering user&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// Confirm user on Cognito
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	_, err := s.CognitoClient.&lt;span style=&#34;color:#41a1c0&#34;&gt;ConfirmSignUp&lt;/span&gt;(
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		ctx, 
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#fc6a5d&#34;&gt;&amp;#34;eu-west-2&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&amp;amp;cognitoidentityprovider.ConfirmSignUpInput{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		    ClientId:         &amp;amp;params.ClientID,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		    ConfirmationCode: &amp;amp;params.Code,  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		    Username:         &amp;amp;params.Username,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;if&lt;/span&gt; err != &lt;span style=&#34;color:#fc5fa3&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		slog.&lt;span style=&#34;color:#41a1c0&#34;&gt;Error&lt;/span&gt;(&lt;span style=&#34;color:#fc6a5d&#34;&gt;&amp;#34;failed to confirm user sign-up&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#fc5fa3&#34;&gt;return&lt;/span&gt; err
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// ...Do other stuff with database here
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#fc5fa3&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Let&amp;rsquo;s write a simple test for this now.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;package&lt;/span&gt; service_test
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#41a1c0&#34;&gt;Test_RegisterUserSuccess&lt;/span&gt;(t *testing.T) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	s := service.&lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	testParams := RegisterParams{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#6c7986&#34;&gt;// ...Fill with correct values
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	err := s.&lt;span style=&#34;color:#41a1c0&#34;&gt;RegisterUser&lt;/span&gt;(context.&lt;span style=&#34;color:#41a1c0&#34;&gt;Background&lt;/span&gt;(), testParams)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	require.&lt;span style=&#34;color:#41a1c0&#34;&gt;NoError&lt;/span&gt;(t, err)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h1 id=&#34;the-problem&#34;&gt;The problem&lt;/h1&gt;
+&lt;p&gt;What happens now?
+The test will attempt to reach a real version of AWS Cognito. This is undesirable for a couple of reasons.&lt;/p&gt;
+&lt;p&gt;Firstly, it relies on an actual instance of Cognito being live and hosted. Behemoth that it is, AWS is so widely used that we can consider it reliable, but a smaller service may not be. Network connections, latency and service uptime can all make tests non-hermetic, not to mention AWS&amp;rsquo; notorious pricing structure being an unnecessary overhead.&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&#34;https://example.org/images/chatgpt_aws_joke.png&#34;
+         alt=&#34;(I think ChatGPT&amp;amp;rsquo;s humour needs some work but it gets the point across.)&#34;/&gt;&lt;figcaption&gt;
+            &lt;p&gt;&lt;em&gt;(I think ChatGPT&amp;rsquo;s humour needs some work but it gets the point across.)&lt;/em&gt;&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Secondly, it violates the principle of unit tests since the bounds of the test exceed the unit of code under test (the &lt;code&gt;RegisterUser&lt;/code&gt; function).&lt;/p&gt;
+&lt;h1 id=&#34;the-solution&#34;&gt;The solution?&lt;/h1&gt;
+&lt;p&gt;&lt;strong&gt;Dependency injection.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;At the time of writing, Wikipedia defines &lt;a href=&#34;https://en.wikipedia.org/wiki/Dependency_injection&#34;&gt;dependency injection&lt;/a&gt; as&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;a programming technique in which an object or function receives other objects or functions that it requires, as opposed to creating them internally&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Using this principle we can &lt;em&gt;inject&lt;/em&gt; the &lt;em&gt;dependency&lt;/em&gt; of the Cognito client into the service of the constructor:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;(cognitoClient *cognitoidentityprovider.Client) *Service {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;return&lt;/span&gt; &amp;amp;Service{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		CognitoClient: cognitoClient,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Now we can configure our client however we like and pass it through. This allows for differently configured clients in the real code and the test, however we still have the problem that it&amp;rsquo;s hitting the &lt;em&gt;genuine&lt;/em&gt; Cognito service.&lt;/p&gt;
+&lt;p&gt;Rather than using a concrete Cognito client (which is rigidly inflexible for our purposes), we can inject something that &lt;em&gt;looks like a Cognito client&lt;/em&gt; instead. We can accomplish this by writing an interface to mimic the desired functionality. This provides a contract that can accommodate any passed dependency - provided it fulfils the interface.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;type&lt;/span&gt; IdentityProvider &lt;span style=&#34;color:#fc5fa3&#34;&gt;interface&lt;/span&gt; {  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#41a1c0&#34;&gt;ConfirmSignUp&lt;/span&gt;(ctx context.Context, params *cognitoidentityprovider.ConfirmSignUpInput, optFns ...&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt;(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.ConfirmSignUpOutput, &lt;span style=&#34;color:#fc5fa3&#34;&gt;error&lt;/span&gt;)  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;And then updating the &lt;code&gt;Service&lt;/code&gt; and constructor:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;type&lt;/span&gt; Service &lt;span style=&#34;color:#fc5fa3&#34;&gt;struct&lt;/span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	CognitoClient IdentityProvider
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// ...Other fields
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;(cognitoClient IdentityProvider) *Service {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;return&lt;/span&gt; &amp;amp;Service{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		CognitoClient: cognitoClient,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;We can then revisit the tests, setting up our mocks for Cognito. Since these also fulfil the &lt;code&gt;IdentityProvider&lt;/code&gt; contract, they can be passed to &lt;code&gt;Service.New()&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;(You can substitute whatever mocks you like here, I like the &lt;a href=&#34;https://github.com/uber-go/mock&#34;&gt;&lt;code&gt;gomock&lt;/code&gt; &lt;/a&gt; library as it generates them all for you.)&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;package&lt;/span&gt; service_test
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#fc5fa3&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#41a1c0&#34;&gt;Test_RegisterUserSuccess&lt;/span&gt;(t *testing.T) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	testParams := RegisterParams{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#6c7986&#34;&gt;// ...Fill with correct values
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// Start gomock Controller
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	ctrl := gomock.&lt;span style=&#34;color:#41a1c0&#34;&gt;NewController&lt;/span&gt;(t)  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#fc5fa3&#34;&gt;defer&lt;/span&gt; ctrl.&lt;span style=&#34;color:#41a1c0&#34;&gt;Finish&lt;/span&gt;()  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// Initialise mock
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	mockIdentityProvider := mocks.&lt;span style=&#34;color:#41a1c0&#34;&gt;NewMockIdentityProvider&lt;/span&gt;(ctrl)  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	mockIdentityProvider.&lt;span style=&#34;color:#41a1c0&#34;&gt;EXPECT&lt;/span&gt;().&lt;span style=&#34;color:#41a1c0&#34;&gt;ConfirmSignUp&lt;/span&gt;(gomock.&lt;span style=&#34;color:#41a1c0&#34;&gt;Any&lt;/span&gt;(), &lt;span style=&#34;color:#fc6a5d&#34;&gt;&amp;#34;eu-west-2&amp;#34;&lt;/span&gt;, &amp;amp;cognitoidentityprovider.ConfirmSignUpInput{  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	    ClientId:         &amp;amp;testParams.ClientID,  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	    ConfirmationCode: &amp;amp;testParams.Code,  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	    Username:         &amp;amp;testParams.Username,  
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}).&lt;span style=&#34;color:#41a1c0&#34;&gt;Return&lt;/span&gt;(&lt;span style=&#34;color:#fc5fa3&#34;&gt;nil&lt;/span&gt;, &lt;span style=&#34;color:#fc5fa3&#34;&gt;nil&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6c7986&#34;&gt;// Pass the mock
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6c7986&#34;&gt;&lt;/span&gt;	s := service.&lt;span style=&#34;color:#41a1c0&#34;&gt;New&lt;/span&gt;(mockIdentityProvider)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	err := s.&lt;span style=&#34;color:#41a1c0&#34;&gt;RegisterUser&lt;/span&gt;(context.&lt;span style=&#34;color:#41a1c0&#34;&gt;Background&lt;/span&gt;(), testParams)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	require.&lt;span style=&#34;color:#41a1c0&#34;&gt;NoError&lt;/span&gt;(t, err)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;A handy side-effect of using the &lt;code&gt;IdentityProvider&lt;/code&gt; interface is that it opens the door for us to add functionality around the Cognito calls in future if we wished. We could write our own &lt;a href=&#34;https://en.wikipedia.org/wiki/Shim_(computing)&#34;&gt;shim&lt;/a&gt; struct around this to provide extra logging or metric exporting, for instance.&lt;/p&gt;
+- https://example.org/posts/mocking_dependency_injection_go/ - </description>
+        </item>
+    
+    
+    
+        <item>
+        <title>Self-hosted music streaming on a Raspberry Pi</title>
+        <link>https://example.org/posts/navidrome_raspberry_pi/</link>
+        <pubDate>Wed, 26 Oct 2022 00:00:00 +0000</pubDate>
+        
+        <guid>https://example.org/posts/navidrome_raspberry_pi/</guid>
+        <description>jamesatk.in https://example.org/posts/navidrome_raspberry_pi/ -&lt;p&gt;I got a Raspberry Pi years ago after finishing GCSE Computing at school and could never quite figure out what to do with it.&lt;/p&gt;
+&lt;p&gt;Recently though I found out about a project called Navidrome:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Navidrome is an open source web-based music collection server and streamer. It gives you freedom to listen to your music collection from any browser or mobile device. It’s like your personal Spotify!&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;(from the &lt;a href=&#34;https://github.com/navidrome/navidrome&#34;&gt;Github README&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;It’s compatible with the &lt;a href=&#34;http://www.subsonic.org/pages/index.jsp&#34;&gt;Subsonic API&lt;/a&gt; which is accessible from a number of music player client across mobile, desktop and web platforms.&lt;/p&gt;
+&lt;p&gt;I thought this would be a perfect project to do to store some of my downloaded music and audiobooks, finally making use of the Pi and learning a bit about Linux along the way.&lt;/p&gt;
+&lt;h2 id=&#34;-setting-up-the-raspberry-pi&#34;&gt;🍓 Setting up the Raspberry Pi&lt;/h2&gt;
+&lt;p&gt;The first step was to set up my Raspberry Pi. I plugged in the SD card and installed Raspberry Pi OS (formerly known as Raspbian). This is a fork of Linux based on Debian and as such is similar to Ubuntu. The Raspberry Pi Imager tool makes this really easy and is available for Windows, Mac and Linux.&lt;/p&gt;
+&lt;p&gt;Due to the low memory of my 4GB SD card I installed a 32-bit OS with no GUI, but any OS would work here.&lt;/p&gt;
+&lt;h3 id=&#34;ssh&#34;&gt;ssh&lt;/h3&gt;
+&lt;p&gt;SSH is a protocol that lets you remote access devices as if you were physically using them. It was really useful to allow me to use the Pi without keeping a screen and keyboard plugged in. I used &lt;code&gt;ifconfig&lt;/code&gt; to find the IP address of the Pi then &lt;code&gt;ssh pi@&amp;lt;ip_address&amp;gt;&lt;/code&gt; to login with the username/password combo for the pi user.&lt;/p&gt;
+&lt;h2 id=&#34;-installing-navidrome&#34;&gt;💿 Installing Navidrome&lt;/h2&gt;
+&lt;p&gt;I followed the official install guide for Linux: &lt;a href=&#34;https://www.navidrome.org/docs/installation/linux/&#34;&gt;https://www.navidrome.org/docs/installation/linux/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;It’s important to know the architecture of the Pi processor to get the correct version of Navidrome from the releases page. Running &lt;code&gt; uname -a&lt;/code&gt; told me mine was armv6 so I installed the &lt;code&gt;.armv6&lt;/code&gt; download.&lt;/p&gt;
+&lt;p&gt;I set up a sample folder on the SD card for now with a sample track in:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#fff;background-color:#1f1f24;-moz-tab-size:2;-o-tab-size:2;tab-size:2;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;sudo mkdir Music &lt;span style=&#34;color:#d0a8ff&#34;&gt;cd&lt;/span&gt; Music wget https://file-examples.com/wp-content/uploads/2017/11/file_example_MP3_700KB.mp3
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The final step in the guide of setting Navidrome up as a service is useful as it’ll run in the background and boot whenever the Pi is powered on.&lt;/p&gt;
+&lt;h3 id=&#34;ngrok&#34;&gt;ngrok&lt;/h3&gt;
+&lt;p&gt;I also installed ngrok at this point to double check that Navidrome works and that I could play from my phone/laptop. ngrok is a popular tunneling tool which can expose applications running on a computer’s local port with a globally accessible web address.&lt;/p&gt;
+&lt;p&gt;Navidrome by default runs on port &lt;code&gt;4533&lt;/code&gt; so running &lt;code&gt;ngrok http 4533&lt;/code&gt; exposes this and gives an address:&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&#34;https://example.org/images/navidrome-ngrok.png&#34;
+         alt=&#34;ngrok now exposes Navidrome on https://6201-209-93-249-244.eu.ngrok.io&#34;/&gt;&lt;figcaption&gt;
+            &lt;p&gt;ngrok now exposes Navidrome on &lt;a href=&#34;https://6201-209-93-249-244.eu.ngrok.io&#34;&gt;https://6201-209-93-249-244.eu.ngrok.io&lt;/a&gt;&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;It was easy to set up an admin user and configure Navidrome from there:&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&#34;https://example.org/images/navidrome-base.png&#34;
+         alt=&#34;Navidrome web UI with sample song installed&#34;/&gt;&lt;figcaption&gt;
+            &lt;p&gt;Navidrome web UI with sample song installed&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;h2 id=&#34;-setting-up-a-persistent-domain&#34;&gt;🌐 Setting up a persistent domain&lt;/h2&gt;
+&lt;p&gt;ngrok is a great tool for testing and developing, but the domain above is long and unmemorable. It also changes each time ngrok runs. ngrok does support custom persistent domains, but unfortunately not on the free tier and I wasn’t willing to spend $20/month on the Pro tier.&lt;/p&gt;
+&lt;p&gt;Fortunately, there are some very cheap domain names out there. I used &lt;a href=&#34;https://www.namecheap.com/&#34;&gt;Namecheap&lt;/a&gt; and searched with their &lt;a href=&#34;https://www.namecheap.com/domains/registration/results/?domain=&amp;amp;type=beast&#34;&gt;“Beast Mode”&lt;/a&gt; tool to get a load of domains roughly similar to what I wanted, filtering for those under £10/year. In the end I went with a &lt;code&gt;.click TLD&lt;/code&gt; for the truly gargantuan sum of £1.07 for the first year 💸&lt;/p&gt;
+&lt;h2 id=&#34;-tunnelling-with-cloudflare&#34;&gt;⛏️ Tunnelling with Cloudflare&lt;/h2&gt;
+&lt;p&gt;As a free alternative to ngrok, Cloudflare provides tunnelling which performs a similar function.&lt;/p&gt;
+&lt;h3 id=&#34;moving-to-cloudflare&#34;&gt;Moving to Cloudflare&lt;/h3&gt;
+&lt;p&gt;The first step was to move the site to be managed by Cloudflare. Namecheap has a guide for this which I followed: &lt;a href=&#34;https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account/&#34;&gt;https://www.namecheap.com/support/knowledgebase/article.aspx/9607/2210/how-to-set-up-dns-records-for-your-domain-in-cloudflare-account/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;I didn’t worry about changing DNS for now, just swapping the nameservers over to Cloudflare’s.&lt;/p&gt;
+&lt;h3 id=&#34;creating-the-tunnel&#34;&gt;Creating the tunnel&lt;/h3&gt;
+&lt;p&gt;For creating the tunnel, I followed this guide: &lt;a href=&#34;https://dev.to/omarcloud20/a-free-cloudflare-tunnel-running-on-a-raspberry-pi-1jid&#34;&gt;https://dev.to/omarcloud20/a-free-cloudflare-tunnel-running-on-a-raspberry-pi-1jid&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;It took an amount of time for the changes to take effect, but was done by the time I’d finished lunch.&lt;/p&gt;
+&lt;p&gt;As with Navidrome, running this tunnel as a Linux service is really useful as it’ll autostart whenever the Pi is powered on.&lt;/p&gt;
+&lt;h2 id=&#34;-mounting-an-external-hard-drive&#34;&gt;🗄️ Mounting an external hard drive&lt;/h2&gt;
+&lt;p&gt;Because the SD card I had was rather small for storage, I bought a &lt;a href=&#34;https://www.amazon.co.uk/UnionSine-Portable-External-Compatible-external/dp/B08VHYZ9F2&#34;&gt;cheap 500GB external USB hard drive&lt;/a&gt; online. This was quite nice as it had a similar footprint to the Pi.&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&#34;https://example.org/images/navidrome-pi.png&#34;
+         alt=&#34;Pi on top of hard drive, nearly the same size&#34;/&gt;&lt;figcaption&gt;
+            &lt;p&gt;Pi on top of hard drive, nearly the same size&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;I loaded a couple of audiobooks onto it from my Windows library, then plugged it into Pi.&lt;/p&gt;
+&lt;p&gt;Linux is slightly different to Windows in that it doesn’t automatically load other attached filesystems. Rather, these have to be “mounted” onto a path on the main filesystem so that they can be read. Additionally, there are different types of filesystems (e.g. NTFS, FAT32, EXT4) so I had to figure out what kind the drive was in order to mount it.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;sudo fdisk -l&lt;/code&gt; is used to list devices and will probably output a large list depending on what is detected. An easy way to find out which device the hard drive was was to compare the output of the command before and after plugging in the drive. In my case, it was &lt;code&gt;/dev/sda1&lt;/code&gt;:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;pi@raspberrypi:~ $ sudo fdisk -l ... Disk /dev/sda: 465.76 GiB, 500107862016 bytes, 976773168 sectors Disk model: Generic Units: sectors of 1 \* 512 = 512 bytes Sector size (logical/physical): 512 bytes / 512 bytes I/O size (minimum/optimal): 512 bytes / 512 bytes Disklabel type: dos Disk identifier: 0xe19ed2ec Device Boot Start End Sectors Size Id Type /dev/sda1 2048 976771071 976769024 465.8G 7 HPFS/NTFS/exFAT
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;Type&lt;/code&gt; is important here as it shows the type of filesystem for mounting, in this case &lt;code&gt;HPFS/NTFS/exFAT&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;I created a new folder in &lt;code&gt;/media&lt;/code&gt; to be the mount point for the drive with &lt;code&gt;sudo mkdir /media/UnionSineExternal&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The command &lt;code&gt;sudo mount -t &amp;lt;filesystem_type&amp;gt; /dev/sda1 /media/UnionSineExternal/&lt;/code&gt; was used to mount the drive. I wasn&amp;rsquo;t sure which type to use given the above output so I tried them all. &lt;code&gt;hpfs&lt;/code&gt; wasn&amp;rsquo;t found by &lt;code&gt;mount&lt;/code&gt; and &lt;code&gt;ntfs&lt;/code&gt; was throwing errors. Luckily, &lt;code&gt;exfat&lt;/code&gt; worked.&lt;/p&gt;
+&lt;p&gt;I then modified &lt;code&gt;/var/lib/navidrome/navidrome.toml&lt;/code&gt;&amp;rsquo;s &lt;code&gt;MusicFolder&lt;/code&gt; variable to point to the mounted drive to set the new Navidrome music location, and ran &lt;code&gt;sudo systemctl restart navidrome.service&lt;/code&gt; to restart Navidrome.&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&#34;https://example.org/images/navidrome-library.png&#34;/&gt;
+&lt;/figure&gt;
+
+&lt;h3 id=&#34;auto-mount-drive-on-boot&#34;&gt;Auto-mount drive on boot&lt;/h3&gt;
+&lt;p&gt;The last thing to do was make sure the drive automatically mounted on boot.&lt;/p&gt;
+&lt;p&gt;Linux stores a list of persistent filesystems in the file found in &lt;code&gt;/etc/&lt;/code&gt;. I used &lt;code&gt;lsblk -f&lt;/code&gt; to list the drive and find its UUID:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;pi@raspberrypi:~ $ lsblk -f NAME FSTYPE FSVER LABEL UUID FSAVAIL FSUSE% MOUNTPOINT sda └─sda1 exfat 1.0 UnionSine 902D-8BC0 461.7G 1% /media/UnionSineExternal
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;I then added a line to the bottom of &lt;code&gt;/etc/fstab&lt;/code&gt; to add this as a filesystem:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;# device dir type options dump fsck UUID=902d-8BC0 /media/UnionSineExternal exfat nofail,x-systemd.device-timeout-1000ms 0 2
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Here I specified the UUID found from before, the directory to mount to, and the type of filesystem. The options told the Pi not to fail booting if the drive couldn’t be found (&lt;code&gt;nofail&lt;/code&gt;) and to set a timeout of 1s in which to attempt finding the drive before moving on (&lt;code&gt;x-systemd.device-timeout-1000ms&lt;/code&gt;). A &lt;code&gt;dump&lt;/code&gt; of &lt;code&gt;0&lt;/code&gt; tells the Pi not to backup the drive, while an fsck of 2 tells the Pi to check errors at boot, but that this isn&amp;rsquo;t a root device.&lt;/p&gt;
+&lt;p&gt;Running &lt;code&gt;sudo mount -a&lt;/code&gt; after this remounted the drives according to &lt;code&gt;fstab&lt;/code&gt;, however I found this wasn&amp;rsquo;t working properly when rebooting the Pi.&lt;/p&gt;
+&lt;p&gt;To solve this I took inspiration from a &lt;a href=&#34;https://askubuntu.com/a/1250344&#34;&gt;StackOverflow answer&lt;/a&gt; which suggested adding a system &lt;a href=&#34;https://en.wikipedia.org/wiki/Cron&#34;&gt;cron job&lt;/a&gt; to run the mount command whenever the Pi is rebooted.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;sudo crontab -e&lt;/code&gt; opens the file so I could add a reboot-triggered job to be executed as the root user (the &lt;code&gt;sudo&lt;/code&gt; is important here!):&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;@reboot mount -a
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Rebooting the Pi now started Navidrome, mounted the music library off an external hard drive and opened a network tunnel to make the streaming service globally accessible. Nice 👌😎&lt;/p&gt;
+&lt;h2 id=&#34;-some-bonus-bits&#34;&gt;✨ Some bonus bits&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;journalctl -n -f -u navidrome.service&lt;/code&gt; - shows tailed log output from Navidrome&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sudo systemctl status navidrome.service&lt;/code&gt; - shows status of Navidrome service&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;-clients&#34;&gt;🎧 Clients&lt;/h2&gt;
+&lt;p&gt;These are the clients I’ve been using so far with Navidrome. Any client which interfaces with the Subsonic API will work, however.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Web — The inbuilt Navidrome web client is pretty good. It is easy to use to manage users and other bits of config and has a variety of themes.&lt;/li&gt;
+&lt;li&gt;Desktop — &lt;a href=&#34;https://github.com/jeffvli/sonixd&#34;&gt;Sonixd&lt;/a&gt; runs across Windows, Mac and Linux and feels very similar to Spotify’s desktop client. Like Navidrome it is themeable and provides playback options for crossfading etc.&lt;/li&gt;
+&lt;li&gt;Mobile — &lt;a href=&#34;https://github.com/austinried/subtracks&#34;&gt;Subtracks&lt;/a&gt; is generally pretty good. Its featureset is a tad more limited than other Android music players but like the other two clients is open-source and seems to be receiving frequent updates.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;And that’s it!&lt;/p&gt;
+- https://example.org/posts/navidrome_raspberry_pi/ - </description>
+        </item>
+    
+    
+  </channel>
+</rss> 
