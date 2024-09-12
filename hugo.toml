@@ -4,7 +4,7 @@ title = 'jamesatk.in'
 theme = 'diary'
 
 [[menu.main]]
-url = "/articles"
+url = "/posts"
 name = "Articles"
 weight = 1
 
