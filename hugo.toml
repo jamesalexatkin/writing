@@ -1,7 +1,7 @@
 baseURL = 'jamesatk.in/blog'
 languageCode = 'en-gb'
 title = 'jamesatk.in'
-theme = 'ananke'
+theme = 'diary'
 canonifyURLs = true
 
 [[menu.main]]
