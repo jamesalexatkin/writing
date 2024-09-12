@@ -1,0 +1,41 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-gb'
+title = 'jamesatk.in'
+theme = 'diary'
+
+[[menu.main]]
+url = "/articles"
+name = "Articles"
+weight = 1
+
+[[menu.main]]
+url = "/tags"
+name = "Tags"
+weight = 3
+
+[[menu.main]]
+url = "/index.xml"
+name = "RSS Feed"
+weight = 4
+
+
+[markup]
+  [markup.highlight]
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = false
+    hl_Lines = ""
+    lineAnchors = ""
+    lineNoStart = 1
+    lineNos = false
+    lineNumbersInTable = true
+    noClasses = true
+    noHl = false
+    style = 'xcode-dark'
+    tabWidth = 2
+
+    
+
+[params]
+    # enableReadingTime=true
+    custom_css = ["css/custom_style.css"]
