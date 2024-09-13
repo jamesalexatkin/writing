@@ -2,7 +2,7 @@ baseURL = 'https://jamesatk.in/blog/'
 languageCode = 'en-gb'
 title = 'jamesatk.in'
 theme = 'diary'
-canonifyURLs = true
+# canonifyURLs = true
 
 [[menu.main]]
 url = "/posts"
