@@ -53,11 +53,11 @@ I also installed ngrok at this point to double check that Navidrome works and th
 
 Navidrome by default runs on port `4533` so running `ngrok http 4533` exposes this and gives an address:
 
-{{< figure src="/images/navidrome-ngrok.png" align=center caption="ngrok now exposes Navidrome on https://6201-209-93-249-244.eu.ngrok.io" >}}
+{{< figure src="https://jamesatk.in/blog/images/navidrome-ngrok.png" align=center caption="ngrok now exposes Navidrome on https://6201-209-93-249-244.eu.ngrok.io" >}}
 
 It was easy to set up an admin user and configure Navidrome from there:
 
-{{< figure src="/images/navidrome-base.png" align=center caption="Navidrome web UI with sample song installed" >}}
+{{< figure src="https://jamesatk.in/blog/images/navidrome-base.png" align=center caption="Navidrome web UI with sample song installed" >}}
 
 ## 🌐 Setting up a persistent domain
 
@@ -87,7 +87,7 @@ As with Navidrome, running this tunnel as a Linux service is really useful as it
 
 Because the SD card I had was rather small for storage, I bought a [cheap 500GB external USB hard drive](https://www.amazon.co.uk/UnionSine-Portable-External-Compatible-external/dp/B08VHYZ9F2) online. This was quite nice as it had a similar footprint to the Pi.
 
-{{< figure src="/images/navidrome-pi.png" align=center caption="Pi on top of hard drive, nearly the same size" >}}
+{{< figure src="https://jamesatk.in/blog/images/navidrome-pi.png" align=center caption="Pi on top of hard drive, nearly the same size" >}}
 
 I loaded a couple of audiobooks onto it from my Windows library, then plugged it into Pi.
 
