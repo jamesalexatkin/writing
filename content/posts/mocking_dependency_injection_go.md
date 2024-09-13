@@ -76,7 +76,7 @@ The test will attempt to reach a real version of AWS Cognito. This is undesirabl
 Firstly, it relies on an actual instance of Cognito being live and hosted. Behemoth that it is, AWS is so widely used that we can consider it reliable, but a smaller service may not be. Network connections, latency and service uptime can all make tests non-hermetic, not to mention AWS' notorious pricing structure being an unnecessary overhead.
 
 
-{{< figure src="/images/chatgpt_aws_joke.png" align=center caption="*(I think ChatGPT's humour needs some work but it gets the point across.)*" >}}
+{{< figure src="https://jamesatk.in/blog/images/chatgpt_aws_joke.png" align=center caption="*(I think ChatGPT's humour needs some work but it gets the point across.)*" >}}
 
 Secondly, it violates the principle of unit tests since the bounds of the test exceed the unit of code under test (the `RegisterUser` function).
 
