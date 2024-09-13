@@ -1,4 +1,4 @@
-# baseURL = 'jamesatk.in/blog'
+baseURL = 'jamesatk.in/blog'
 languageCode = 'en-gb'
 title = 'jamesatk.in'
 theme = 'diary'
