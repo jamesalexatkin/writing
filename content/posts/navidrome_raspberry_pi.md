@@ -107,7 +107,7 @@ The command `sudo mount -t <filesystem_type> /dev/sda1 /media/UnionSineExternal/
 
 I then modified `/var/lib/navidrome/navidrome.toml`'s `MusicFolder` variable to point to the mounted drive to set the new Navidrome music location, and ran `sudo systemctl restart navidrome.service` to restart Navidrome.
 
-{{< figure src="/images/navidrome-library.png" align=center >}}
+{{< figure src="https://jamesatk.in/blog/images/navidrome-library.png" align=center >}}
 
 ### Auto-mount drive on boot
 
