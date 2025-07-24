@@ -1,4 +1,4 @@
-baseURL = 'https://jamesatk.in/blog/'
+baseURL = 'https://jamesatk.in/writing/'
 languageCode = 'en-gb'
 title = 'jamesatk.in'
 theme = 'diary'
