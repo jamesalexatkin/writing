@@ -6,38 +6,37 @@ theme = 'diary'
 
 [[menu.main]]
 url = "/posts"
-name = "Articles"
+name = "Posts"
 weight = 1
 
-[[menu.main]]
-url = "/tags"
-name = "Tags"
-weight = 3
+# [[menu.main]]
+# url = "/tags"
+# name = "Tags"
+# weight = 3
 
-[[menu.main]]
-url = "/index.xml"
-name = "RSS Feed"
-weight = 4
+# [[menu.main]]
+# url = "/index.xml"
+# name = "RSS Feed"
+# weight = 4
 
 
 [markup]
-  [markup.highlight]
-    anchorLineNos = false
-    codeFences = true
-    guessSyntax = false
-    hl_Lines = ""
-    lineAnchors = ""
-    lineNoStart = 1
-    lineNos = false
-    lineNumbersInTable = true
-    noClasses = true
-    noHl = false
-    style = 'xcode-dark'
-    tabWidth = 2
+[markup.highlight]
+anchorLineNos = false
+codeFences = true
+guessSyntax = false
+hl_Lines = ""
+lineAnchors = ""
+lineNoStart = 1
+lineNos = false
+lineNumbersInTable = true
+noClasses = true
+noHl = false
+style = 'xcode-dark'
+tabWidth = 2
 
-    
 
 [params]
-  favicon = "https://raw.githubusercontent.com/jamesalexatkin/jamesalexatkin.github.io/master/favicon.png"
-  # enableReadingTime=true
-  # custom_css = ["css/custom_style.css"]
+favicon = "https://raw.githubusercontent.com/jamesalexatkin/jamesalexatkin.github.io/master/favicon.png"
+# enableReadingTime=true
+# custom_css = ["css/custom_style.css"]
