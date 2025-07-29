@@ -36,7 +36,7 @@ After considering [WordReference](https://www.wordreference.com/), I settled on 
 
 With the lack of on onboard clock, I'd also need to synchronise time with an NTP server to ensure the word was fetched on time.
 
-{{< figure src="https://jamesatk.in/writing/images/mot-du-jour-architecure.png" alt="Project architecture overview" align=center caption="Architecture overview" >}}
+{{< figure src="https://jamesatk.in/writing/images/mot-du-jour-architecture.png" alt="Project architecture overview" align=center caption="Architecture overview" >}}
 
 # ⚙️ Hardware
 
